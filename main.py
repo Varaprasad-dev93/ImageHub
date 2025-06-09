@@ -8,7 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from pathlib import Path
-from urllib.parse import urljoin
+from urllib.parse import urljoinimport uvicorn
+import uvicorn
+
 import httpx
 import asyncio
 load_dotenv()
@@ -190,3 +192,7 @@ async def download_images(request: Request):
             status_code=500,
             detail=f"Download processing failed: {str(e)}"
         )
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)

@@ -93,11 +93,29 @@ count = 0
 async def root():
     return {"message": "App is running"}
 
+def increment_visit_count() -> int:
+    """Thread-safe visit counter increment"""
+    with count_lock:
+        
+        # Read-modify-write in a single operation
+        with open("Visits.txt", 'r+') as f:
+            try:
+                count = int(f.read().strip() or 0)
+            except ValueError:
+                count = 0
+                
+            count += 1
+            f.seek(0)
+            f.truncate()
+            f.write(str(count))
+            
+        return count
+    
+    
 @app.get("/visit")
 async def visit_tracker(request: Request, response: Response):
     global count, count_lock
-    with count_lock:
-        count += 1
+    count = increment_visit_count()
     response.set_cookie(
         key="visited",
         value="true",

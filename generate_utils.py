@@ -10,7 +10,7 @@ def generate_image_from_prompt(prompt: str, seed: int = None):
         raise Exception("TOGETHER_API_KEY not set in environment.")
     
     client = Together(api_key=api_key)
-    print(f"Using Together API client: {client}")
+    # print(f"Using Together API client: {client}")
     if seed is None:
         seed = random.randint(0, 1_000_000)
     try:
@@ -29,7 +29,7 @@ def generate_image_from_prompt(prompt: str, seed: int = None):
         return response.data[0].url
 
     except Exception as e:
-        print(f" Error in generate_image_from_prompt: {e}")
+        # print(f" Error in generate_image_from_prompt: {e}")
         raise Exception(f"Image generation failed: {e}")
 
 def generate_multiple_images(prompts, image_paths,number):

@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
+from pathlib import Path
+from urllib.parse import urljoin
 import httpx
 import asyncio
 load_dotenv()
@@ -104,12 +106,12 @@ async def handle_scrape(url:str = Form(...), max_images: int = Form(...)):
     present=time.time()
     
     try:
-        print(f"Starting scraping for {url} with max_images={max_images}")
+        # print(f"Starting scraping for {url} with max_images={max_images}")
         imgUrls = await scrape_images(url,  max_images)
 
         if not imgUrls:
             raise HTTPException(status_code=404, detail="No images found at the provided URL.")
-        print(f"Scarping takes {time.time()-present} seconds")
+        # print(f"Scarping takes {time.time()-present} seconds")
         return {
             "message": f"Scraping completed for {url}. Found {len(imgUrls)} images.",
             "images_link": imgUrls
@@ -129,7 +131,7 @@ async def generate_images(prompt: str = Form(...),number: int = Form(5)):
             raise HTTPException(status_code=500, detail="Image generation failed or returned no images.")
 
         elapsed = time.time() - start_time
-        print(f"Image generation for '{prompt}' completed in {elapsed:.2f} seconds.")
+        # print(f"Image generation for '{prompt}' completed in {elapsed:.2f} seconds.")
 
         return {
             "message": f"{number} images generated for prompt: {prompt}",
@@ -146,7 +148,6 @@ async def save_image(url):
 
         async with httpx.AsyncClient() as client:
             response = await client.get(url)
-            print("res",response)
             if response.status_code == 200:
                 with open(path, 'wb') as f:
                     f.write(response.content)
@@ -155,28 +156,37 @@ async def save_image(url):
                 raise Exception(f"Failed to download image, status: {response.status_code}")
     except Exception as e:
         print(f"Failed to download {url}: {e}")
-        return None
+        return None  
  
 
             
 @app.post("/api/download")
 async def download_images(request: Request):
     form = await request.form()
-    token_list = form.getlist("token") 
-    base_url = get_base_url(request)
-    print("Token list received:", token_list)
+    token_list = form.getlist("token")
+    
     if not token_list:
-        raise HTTPException(status_code=400, detail="No tokens provided.")
-    # Run async downloads concurrently
+        raise HTTPException(status_code=400, detail="No image tokens provided")
+    
     try:
-        print("Starting download for tokens:", token_list)
+        # Process all downloads concurrently
         tasks = [save_image(url) for url in token_list]
         results = await asyncio.gather(*tasks)
-    # Filter out None and form full URLs
-        final_urls = [
-        f"{base_url}/{filename.replace('\\','/')}" for filename in results if filename
+        
+        # Generate URLs for successfully downloaded files
+        downloaded_urls = [
+            urljoin(
+                str(get_base_url(request)),
+                Path(filename).as_posix()
+            )
+            for filename in results 
+            if filename  # Only include successful downloads
         ]
-
-        return JSONResponse(content=final_urls)
+        
+        return JSONResponse(content=downloaded_urls)
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Download failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Download processing failed: {str(e)}"
+        )

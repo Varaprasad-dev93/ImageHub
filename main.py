@@ -89,6 +89,10 @@ from threading import Lock
 count_lock = Lock()
 count = 0
 
+@app.get("/")
+async def root():
+    return {"message": "App is running"}
+
 @app.get("/visit")
 async def visit_tracker(request: Request, response: Response):
     global count, count_lock

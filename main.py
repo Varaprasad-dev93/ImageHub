@@ -8,9 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from pathlib import Path
-from urllib.parse import urljoinimport uvicorn
+from urllib.parse import urljoin
 import uvicorn
-
 import httpx
 import asyncio
 load_dotenv()

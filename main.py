@@ -14,6 +14,12 @@ import httpx
 import asyncio
 load_dotenv()
 
+TEMP_DIR = "temp"
+ZIP_DIR = "temp_zips"
+os.makedirs(TEMP_DIR, exist_ok=True)
+os.makedirs(ZIP_DIR, exist_ok=True)
+
+# Initialize FastAPI app
 app = FastAPI()
 app.mount("/temp", StaticFiles(directory="temp"), name="temp")
 # Add your frontend URL here
@@ -33,10 +39,6 @@ app.add_middleware(
     allow_headers=["*"],              # Allow all headers
 )
 
-TEMP_DIR = "temp"
-ZIP_DIR = "temp_zips"
-os.makedirs(TEMP_DIR, exist_ok=True)
-os.makedirs(ZIP_DIR, exist_ok=True)
 
 def get_base_url(request: Request) -> str:
     

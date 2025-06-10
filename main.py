@@ -103,7 +103,8 @@ def increment_visit_count() -> int:
                 count = int(f.read().strip() or 0)
             except ValueError:
                 count = 0
-                
+            print(f"Current visit count: {count}")
+            print("File opened successfully",f)
             count += 1
             f.seek(0)
             f.truncate()

@@ -12,6 +12,7 @@ from urllib.parse import urljoin
 import uvicorn
 import httpx
 import asyncio
+import json
 load_dotenv()
 
 TEMP_DIR = "temp"
@@ -103,8 +104,6 @@ def increment_visit_count() -> int:
                 count = int(f.read().strip() or 0)
             except ValueError:
                 count = 0
-            print(f"Current visit count: {count}")
-            print("File opened successfully",f)
             count += 1
             f.seek(0)
             f.truncate()
@@ -128,21 +127,29 @@ async def visit_tracker(request: Request, response: Response):
     return {"count": count}
 
 @app.post("/api/scrape")
-async def handle_scrape(url:str = Form(...), max_images: int = Form(...)):
-    present=time.time()
-    
+async def handle_scrape(
+    url: str = Form(...),
+    max_images: int = Form(...),
+    selectedTypes: str = Form(...)
+):
     try:
-        # print(f"Starting scraping for {url} with max_images={max_images}")
-        imgUrls = await scrape_images(url,  max_images)
+        selected_types = json.loads(selectedTypes)
+        if not isinstance(selected_types, list):
+            raise ValueError("selectedTypes must be a list")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid selectedTypes format: {e}")
+
+    try:
+        imgUrls = await scrape_images(url, max_images, selected_types)
 
         if not imgUrls:
             raise HTTPException(status_code=404, detail="No images found at the provided URL.")
-        # print(f"Scarping takes {time.time()-present} seconds")
+
         return {
             "message": f"Scraping completed for {url}. Found {len(imgUrls)} images.",
             "images_link": imgUrls
         }
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Scraping failed: {e}")
 
